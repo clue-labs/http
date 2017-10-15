@@ -25,7 +25,7 @@ class HttpBodyStream extends EventEmitter implements StreamInterface, ReadableSt
      * @param ReadableStreamInterface $input - Stream data from $stream as a body of a PSR-7 object4
      * @param int|null $size - size of the data body
      */
-    public function __construct(ReadableStreamInterface $input, $size = null)
+    public function __construct(ReadableStreamInterface $input, $size)
     {
         $this->input = $input;
         $this->size = $size;
