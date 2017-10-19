@@ -65,6 +65,30 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         $this->assertSame($body, $exposedRequest->getBody()->getContents());
     }
 
+    public function testExcessiveSizeImmediatelyReturnsError413ForKnownSize()
+    {
+        $loop = Factory::create();
+        
+        $stream = new ThroughStream();
+        $stream->end('aa');
+        $serverRequest = new ServerRequest(
+            'GET',
+            'https://example.com/',
+            array(),
+            new HttpBodyStream($stream, 2)
+        );
+
+        $buffer = new RequestBodyBufferMiddleware(1);
+        $response = $buffer(
+            $serverRequest,
+            function (ServerRequestInterface $request) {
+                return $request;
+            }
+        );
+
+        $this->assertSame(413, $response->getStatusCode());
+    }
+
     public function testExcessiveSizeReturnsError413()
     {
         $loop = Factory::create();
@@ -74,7 +98,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
             'GET',
             'https://example.com/',
             array(),
-            new HttpBodyStream($stream)
+            new HttpBodyStream($stream, null)
         );
 
         $buffer = new RequestBodyBufferMiddleware(1);
@@ -85,7 +109,7 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
             }
         );
 
-        $stream->write('aa');
+        $stream->end('aa');
 
         $exposedResponse = null;
         $promise->then(
