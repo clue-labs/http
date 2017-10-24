@@ -32,6 +32,7 @@ final class RequestBodyBufferMiddleware
     {
         $body = $request->getBody();
 
+        // request body of known size exceeding limit
         if ($body->getSize() > $this->sizeLimit) {
             return new Response(413, array('Content-Type' => 'text/plain'), 'Request body exceeds allowed limit');
         }
@@ -47,6 +48,7 @@ final class RequestBodyBufferMiddleware
 
             return $stack($request);
         }, function($error) {
+            // request body of unknown size exceeding limit during buffering
             if ($error instanceof OverflowException) {
                 return new Response(413, array('Content-Type' => 'text/plain'), 'Request body exceeds allowed limit');
             }
