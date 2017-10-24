@@ -699,13 +699,7 @@ the next middleware handlers.
 
 The `RequestBodyBufferMiddleware` will buffer requests with bodies of known size 
 (i.e. with `Content-Length` header specified) as well as requests with bodies of 
-unknown size (i.e. with `Transfer-Encoding: chunked` header). To simplify request 
-handling for downstream middlewares or applications buffered `chunked` requests will 
-have the `Transfer-Encoding` header removed and a `Content-Length` header with the 
-actual request body size received added instead.
-
-Note that this only affects incoming requests, the chunked transfer encoding for 
-outgoing responses is not affected.
+unknown size (i.e. with `Transfer-Encoding: chunked` header).
 
 All requests will be buffered in memory until the request body end has
 been reached and then call the next middleware handler with the complete,
