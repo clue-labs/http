@@ -123,4 +123,39 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
 
         Block\await($promise, $loop);
     }
+
+    public function testBufferingErrorReturnsError400()
+    {
+        $loop = Factory::create();
+        
+        $stream = new ThroughStream();
+        $serverRequest = new ServerRequest(
+            'GET',
+            'https://example.com/',
+            array(),
+            new HttpBodyStream($stream, null)
+        );
+
+        $buffer = new RequestBodyBufferMiddleware(1);
+        $promise = $buffer(
+            $serverRequest,
+            function (ServerRequestInterface $request) {
+                return $request;
+            }
+        );
+
+        $stream->emit('error', array(new \RuntimeException()));
+
+        $exposedResponse = null;
+        $promise->then(
+            function($response) use (&$exposedResponse) {
+                $exposedResponse = $response;
+            }, 
+            $this->expectCallableNever()
+        );
+
+        $this->assertSame(400, $exposedResponse->getStatusCode());
+
+        Block\await($promise, $loop);
+    }
 }
