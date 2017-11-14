@@ -124,7 +124,10 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         Block\await($promise, $loop);
     }
 
-    public function testBufferingErrorReturnsError400()
+    /**
+     * @expectedException RuntimeException
+     */
+    public function testBufferingErrorThrows()
     {
         $loop = Factory::create();
         
@@ -145,16 +148,6 @@ final class RequestBodyBufferMiddlewareTest extends TestCase
         );
 
         $stream->emit('error', array(new \RuntimeException()));
-
-        $exposedResponse = null;
-        $promise->then(
-            function($response) use (&$exposedResponse) {
-                $exposedResponse = $response;
-            }, 
-            $this->expectCallableNever()
-        );
-
-        $this->assertSame(400, $exposedResponse->getStatusCode());
 
         Block\await($promise, $loop);
     }
