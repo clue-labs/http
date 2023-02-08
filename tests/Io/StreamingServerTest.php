@@ -15,7 +15,10 @@ use React\Tests\Http\TestCase;
 
 class StreamingServerTest extends TestCase
 {
+    /** @var SocketConnectionStub */
     private $connection;
+
+    /** @var SocketServerStub */
     private $socket;
 
     /** @var ?int */
@@ -26,12 +29,7 @@ class StreamingServerTest extends TestCase
      */
     public function setUpConnectionMockAndSocket()
     {
-        $this->markTestIncomplete();
-
         $this->connection = new SocketConnectionStub();
-        //$this->connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
-        //$this->connection->method('isWritable')->willReturn(true);
-        //$this->connection->method('isReadable')->willReturn(true);
 
         $this->socket = new SocketServerStub();
     }
@@ -90,16 +88,20 @@ class StreamingServerTest extends TestCase
             $requestAssertion = $request;
         });
 
-        $this->connection
-            ->expects($this->any())
-            ->method('getRemoteAddress')
-            ->willReturn('127.0.0.1:8080');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getRemoteAddress'))->getMock();
+        }
+        $connection->expects($this->any())->method('getRemoteAddress')->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
 
         $serverParams = $requestAssertion->getServerParams();
 
@@ -123,16 +125,20 @@ class StreamingServerTest extends TestCase
             $requestAssertion = $request;
         });
 
-        $this->connection
-            ->expects($this->any())
-            ->method('getRemoteAddress')
-            ->willReturn('127.0.0.1:8080');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getRemoteAddress'))->getMock();
+        }
+        $connection->expects($this->any())->method('getRemoteAddress')->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
 
         $serverParams = $requestAssertion->getServerParams();
 
@@ -401,16 +407,20 @@ class StreamingServerTest extends TestCase
             $requestAssertion = $request;
         });
 
-        $this->connection
-            ->expects($this->any())
-            ->method('getLocalAddress')
-            ->willReturn('127.0.0.1:80');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress'))->getMock();
+        }
+        $connection->expects($this->any())->method('getLocalAddress')->willReturn('127.0.0.1:80');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET /test HTTP/1.0\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
 
         $this->assertInstanceOf('RingCentral\Psr7\Request', $requestAssertion);
         $this->assertSame('GET', $requestAssertion->getMethod());
@@ -525,10 +535,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->pause();
         });
 
-        $this->connection->expects($this->once())->method('pause');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('pause'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('pause'))->getMock();
+        }
+        $connection->expects($this->once())->method('pause');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -536,7 +553,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 5\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestResumeWillBeForwardedToConnection()
@@ -545,10 +562,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->resume();
         });
 
-        $this->connection->expects($this->once())->method('resume');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('resume'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('resume'))->getMock();
+        }
+        $connection->expects($this->once())->method('resume');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -556,7 +580,7 @@ class StreamingServerTest extends TestCase
         $data .= "Content-Length: 5\r\n";
         $data .= "\r\n";
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestCloseWillNotCloseConnection()
@@ -565,13 +589,20 @@ class StreamingServerTest extends TestCase
             $request->getBody()->close();
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestPauseAfterCloseWillNotBeForwarded()
@@ -581,14 +612,21 @@ class StreamingServerTest extends TestCase
             $request->getBody()->pause();
         });
 
-        $this->connection->expects($this->never())->method('close');
-        $this->connection->expects($this->never())->method('pause');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close', 'pause'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close', 'pause'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
+        $connection->expects($this->never())->method('pause');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestResumeAfterCloseWillNotBeForwarded()
@@ -598,14 +636,21 @@ class StreamingServerTest extends TestCase
             $request->getBody()->resume();
         });
 
-        $this->connection->expects($this->never())->method('close');
-        $this->connection->expects($this->never())->method('resume');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close', 'resume'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close', 'resume'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
+        $connection->expects($this->never())->method('resume');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestEventWithoutBodyWillNotEmitData()
@@ -672,26 +717,13 @@ class StreamingServerTest extends TestCase
             return new Response();
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = $this->createGetRequest();
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("\r\nServer: ReactPHP/1\r\n", $buffer);
+        $this->assertContainsString("\r\nServer: ReactPHP/1\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponsePendingPromiseWillNotSendAnything()
@@ -702,26 +734,13 @@ class StreamingServerTest extends TestCase
             return new Promise(function () { }, $never);
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = $this->createGetRequest();
         $this->connection->emit('data', array($data));
 
-        $this->assertEquals('', $buffer);
+        $this->assertEquals('', $this->connection->writeBuffer);
     }
 
     public function testResponsePendingPromiseWillBeCancelledIfConnectionCloses()
@@ -732,19 +751,6 @@ class StreamingServerTest extends TestCase
             return new Promise(function () { }, $once);
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -752,7 +758,7 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', array($data));
         $this->connection->emit('close');
 
-        $this->assertEquals('', $buffer);
+        $this->assertEquals('', $this->connection->writeBuffer);
     }
 
     public function testResponseBodyStreamAlreadyClosedWillSendEmptyBodyChunkedEncoded()
@@ -768,27 +774,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertStringEndsWith("\r\n\r\n0\r\n\r\n", $buffer);
+        $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertStringEndsWith("\r\n\r\n0\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseBodyStreamEndingWillSendEmptyBodyChunkedEncoded()
@@ -803,19 +796,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -824,8 +804,8 @@ class StreamingServerTest extends TestCase
 
         $stream->end();
 
-        $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertStringEndsWith("\r\n\r\n0\r\n\r\n", $buffer);
+        $this->assertStringStartsWith("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertStringEndsWith("\r\n\r\n0\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseBodyStreamAlreadyClosedWillSendEmptyBodyPlainHttp10()
@@ -841,27 +821,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertStringStartsWith("HTTP/1.0 200 OK\r\n", $buffer);
-        $this->assertStringEndsWith("\r\n\r\n", $buffer);
+        $this->assertStringStartsWith("HTTP/1.0 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertStringEndsWith("\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseStreamWillBeClosedIfConnectionIsAlreadyClosed()
@@ -877,46 +844,21 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
-        $this->connection = $this->getMockBuilder('React\Socket\Connection')
-            ->disableOriginalConstructor()
-            ->setMethods(
-                array(
-                    'write',
-                    'end',
-                    'close',
-                    'pause',
-                    'resume',
-                    'isReadable',
-                    'isWritable',
-                    'getRemoteAddress',
-                    'getLocalAddress',
-                    'pipe'
-                )
-            )
-            ->getMock();
-
-        $this->connection->expects($this->once())->method('isWritable')->willReturn(false);
-        $this->connection->expects($this->never())->method('write');
-        $this->connection->expects($this->never())->method('write');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('isWritable', 'write'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('isWritable', 'write'))->getMock();
+        }
+        $connection->expects($this->once())->method('isWritable')->willReturn(false);
+        $connection->expects($this->never())->method('write');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testResponseBodyStreamWillBeClosedIfConnectionEmitsCloseEvent()
@@ -954,26 +896,13 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertEquals("HTTP/1.1 200 OK\r\nUpgrade: demo\r\nContent-Length: 3\r\n\r\nfoo", $buffer);
+        $this->assertEquals("HTTP/1.1 200 OK\r\nUpgrade: demo\r\nContent-Length: 3\r\n\r\nfoo", $this->connection->writeBuffer);
     }
 
     public function testResponseUpgradeWishInRequestCanBeIgnoredByReturningNormalResponse()
@@ -989,26 +918,13 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: demo\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo", $buffer);
+        $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo", $this->connection->writeBuffer);
     }
 
     public function testResponseUpgradeSwitchingProtocolIncludesConnectionUpgradeHeaderWithoutContentLength()
@@ -1027,26 +943,13 @@ class StreamingServerTest extends TestCase
 
         $server->on('error', 'printf');
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: demo\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertEquals("HTTP/1.1 101 Switching Protocols\r\nUpgrade: demo\r\nConnection: upgrade\r\n\r\nfoo", $buffer);
+        $this->assertEquals("HTTP/1.1 101 Switching Protocols\r\nUpgrade: demo\r\nConnection: upgrade\r\n\r\nfoo", $this->connection->writeBuffer);
     }
 
     public function testResponseUpgradeSwitchingProtocolWithStreamWillPipeDataToConnection()
@@ -1065,19 +968,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -1087,7 +977,7 @@ class StreamingServerTest extends TestCase
         $stream->write('hello');
         $stream->write('world');
 
-        $this->assertEquals("HTTP/1.1 101 Switching Protocols\r\nUpgrade: demo\r\nConnection: upgrade\r\n\r\nhelloworld", $buffer);
+        $this->assertEquals("HTTP/1.1 101 Switching Protocols\r\nUpgrade: demo\r\nConnection: upgrade\r\n\r\nhelloworld", $this->connection->writeBuffer);
     }
 
     public function testResponseConnectMethodStreamWillPipeDataToConnection()
@@ -1102,19 +992,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -1124,7 +1001,7 @@ class StreamingServerTest extends TestCase
         $stream->write('hello');
         $stream->write('world');
 
-        $this->assertStringEndsWith("\r\n\r\nhelloworld", $buffer);
+        $this->assertStringEndsWith("\r\n\r\nhelloworld", $this->connection->writeBuffer);
     }
 
 
@@ -1140,13 +1017,21 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('pipe'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('pipe'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('pipe')->with($stream);
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('pipe')->with($stream);
 
         $data = "CONNECT example.com:80 HTTP/1.1\r\nHost: example.com:80\r\n\r\n";
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testResponseContainsSameRequestProtocolVersionAndChunkedBodyForHttp11()
@@ -1159,27 +1044,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("bye", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("bye", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsSameRequestProtocolVersionAndRawBodyForHttp10()
@@ -1192,28 +1064,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.0\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("bye", $buffer);
+        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("bye", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyForHeadRequest()
@@ -1226,27 +1085,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("bye", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyForHeadRequestWithStreamingResponse()
@@ -1262,26 +1109,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyAndNoContentLengthForNoContentStatus()
@@ -1294,27 +1129,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("bye", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyAndNoContentLengthForNoContentStatusResponseWithStreamingBody()
@@ -1330,26 +1153,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 204 No Content\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoContentLengthHeaderForNotModifiedStatus()
@@ -1362,26 +1173,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertNotContainsString("\r\nContent-Length: 0\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("\r\nContent-Length: 0\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsExplicitContentLengthHeaderForNotModifiedStatus()
@@ -1394,26 +1193,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsExplicitContentLengthHeaderForHeadRequests()
@@ -1426,26 +1213,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyForNotModifiedStatus()
@@ -1458,27 +1233,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
-        $this->assertNotContainsString("bye", $buffer);
+        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("bye", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsNoResponseBodyForNotModifiedStatusWithStreamingBody()
@@ -1494,26 +1257,14 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $buffer);
-        $this->assertContainsString("\r\nContent-Length: 3\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 304 Not Modified\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\nContent-Length: 3\r\n", $this->connection->writeBuffer);
     }
 
     public function testRequestInvalidHttpProtocolVersionWillEmitErrorAndSendErrorResponse()
@@ -1524,19 +1275,6 @@ class StreamingServerTest extends TestCase
             $error = $message;
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -1545,9 +1283,9 @@ class StreamingServerTest extends TestCase
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
 
-        $this->assertContainsString("HTTP/1.1 505 HTTP Version not supported\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("Error 505: HTTP Version not supported", $buffer);
+        $this->assertContainsString("HTTP/1.1 505 HTTP Version not supported\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("Error 505: HTTP Version not supported", $this->connection->writeBuffer);
     }
 
     public function testRequestOverflowWillEmitErrorAndSendErrorResponse()
@@ -1558,19 +1296,6 @@ class StreamingServerTest extends TestCase
             $error = $message;
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -1580,8 +1305,8 @@ class StreamingServerTest extends TestCase
 
         $this->assertInstanceOf('OverflowException', $error);
 
-        $this->assertContainsString("HTTP/1.1 431 Request Header Fields Too Large\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\nError 431: Request Header Fields Too Large", $buffer);
+        $this->assertContainsString("HTTP/1.1 431 Request Header Fields Too Large\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\nError 431: Request Header Fields Too Large", $this->connection->writeBuffer);
     }
 
     public function testRequestInvalidWillEmitErrorAndSendErrorResponse()
@@ -1592,19 +1317,6 @@ class StreamingServerTest extends TestCase
             $error = $message;
         });
 
-        $buffer = '';
-
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -1613,8 +1325,8 @@ class StreamingServerTest extends TestCase
 
         $this->assertInstanceOf('InvalidArgumentException', $error);
 
-        $this->assertContainsString("HTTP/1.1 400 Bad Request\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\nError 400: Bad Request", $buffer);
+        $this->assertContainsString("HTTP/1.1 400 Bad Request\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\nError 400: Bad Request", $this->connection->writeBuffer);
     }
 
     public function testRequestContentLengthBodyDataWillEmitDataEventOnRequestStream()
@@ -1944,10 +1656,17 @@ class StreamingServerTest extends TestCase
             return \React\Promise\resolve(new Response());
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1958,7 +1677,7 @@ class StreamingServerTest extends TestCase
             $data .= 'a';
         }
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestInvalidChunkBodyTooLongWillEmitErrorOnRequestStream()
@@ -1968,10 +1687,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('error', $errorEvent);
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -1980,7 +1706,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "5\r\nhello world\r\n";
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestUnexpectedEndOfRequestWithChunkedTransferConnectionWillEmitErrorOnRequestStream()
@@ -1990,10 +1716,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('error', $errorEvent);
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2002,8 +1735,8 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "5\r\nhello\r\n";
 
-        $this->connection->emit('data', array($data));
-        $this->connection->emit('end');
+        $connection->emit('data', array($data));
+        $connection->emit('end');
     }
 
     public function testRequestInvalidChunkHeaderWillEmitErrorOnRequestStream()
@@ -2013,10 +1746,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('error', $errorEvent);
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2025,7 +1765,7 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "hello\r\nhello\r\n";
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestUnexpectedEndOfRequestWithContentLengthWillEmitErrorOnRequestStream()
@@ -2035,10 +1775,17 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('error', $errorEvent);
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = "GET / HTTP/1.1\r\n";
         $data .= "Host: example.com\r\n";
@@ -2047,8 +1794,8 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
         $data .= "incomplete";
 
-        $this->connection->emit('data', array($data));
-        $this->connection->emit('end');
+        $connection->emit('data', array($data));
+        $connection->emit('end');
     }
 
     public function testRequestWithoutBodyWillEmitEndOnRequestStream()
@@ -2065,14 +1812,21 @@ class StreamingServerTest extends TestCase
             $request->getBody()->on('error', $errorEvent);
         });
 
-        $this->connection->expects($this->never())->method('close');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('close'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('close'))->getMock();
+        }
+        $connection->expects($this->never())->method('close');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
     }
 
     public function testRequestWithoutDefinedLengthWillIgnoreDataEvent()
@@ -2109,18 +1863,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2129,8 +1871,8 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', array($data));
         $stream->emit('data', array('hello'));
 
-        $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertContainsString("Transfer-Encoding: chunked", $this->connection->writeBuffer);
+        $this->assertContainsString("hello", $this->connection->writeBuffer);
     }
 
     public function testResponseWithBodyStringWillOverwriteExplicitContentLengthAndTransferEncoding()
@@ -2146,18 +1888,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2165,9 +1895,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertContainsString("Content-Length: 5", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertNotContainsString("Transfer-Encoding: chunked", $this->connection->writeBuffer);
+        $this->assertContainsString("Content-Length: 5", $this->connection->writeBuffer);
+        $this->assertContainsString("hello", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsResponseBodyWithTransferEncodingChunkedForBodyWithUnknownSize()
@@ -2184,27 +1914,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertNotContainsString("Content-Length:", $buffer);
-        $this->assertContainsString("body", $buffer);
+        $this->assertContainsString("Transfer-Encoding: chunked", $this->connection->writeBuffer);
+        $this->assertNotContainsString("Content-Length:", $this->connection->writeBuffer);
+        $this->assertContainsString("body", $this->connection->writeBuffer);
     }
 
     public function testResponseContainsResponseBodyWithPlainBodyWithUnknownSizeForLegacyHttp10()
@@ -2221,27 +1939,15 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
         $this->connection->emit('data', array($data));
 
-        $this->assertNotContainsString("Transfer-Encoding: chunked", $buffer);
-        $this->assertNotContainsString("Content-Length:", $buffer);
-        $this->assertContainsString("body", $buffer);
+        $this->assertNotContainsString("Transfer-Encoding: chunked", $this->connection->writeBuffer);
+        $this->assertNotContainsString("Content-Length:", $this->connection->writeBuffer);
+        $this->assertContainsString("body", $this->connection->writeBuffer);
     }
 
     public function testResponseWithCustomTransferEncodingWillBeIgnoredAndUseChunkedTransferEncodingInstead()
@@ -2257,18 +1963,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2277,9 +1971,9 @@ class StreamingServerTest extends TestCase
         $this->connection->emit('data', array($data));
         $stream->emit('data', array('hello'));
 
-        $this->assertContainsString('Transfer-Encoding: chunked', $buffer);
-        $this->assertNotContainsString('Transfer-Encoding: custom', $buffer);
-        $this->assertContainsString("5\r\nhello\r\n", $buffer);
+        $this->assertContainsString('Transfer-Encoding: chunked', $this->connection->writeBuffer);
+        $this->assertNotContainsString('Transfer-Encoding: custom', $this->connection->writeBuffer);
+        $this->assertContainsString("5\r\nhello\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseWithoutExplicitDateHeaderWillAddCurrentDateFromClock()
@@ -2296,18 +1990,6 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($clock, 1652972091.3958);
 
-        $buffer = '';
-            $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2315,9 +1997,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Date: Thu, 19 May 2022 14:54:51 GMT\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("Date: Thu, 19 May 2022 14:54:51 GMT\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseWithCustomDateHeaderOverwritesDefault()
@@ -2329,18 +2011,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2348,9 +2018,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Date: Tue, 15 Nov 1994 08:12:31 GMT\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("Date: Tue, 15 Nov 1994 08:12:31 GMT\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseWithEmptyDateHeaderRemovesDateHeader()
@@ -2362,18 +2032,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2381,9 +2039,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertNotContainsString("Date:", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("Date:", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseCanContainMultipleCookieHeaders()
@@ -2402,18 +2060,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2421,7 +2067,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertEquals("HTTP/1.1 200 OK\r\nSet-Cookie: name=test\r\nSet-Cookie: session=abc\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", $buffer);
+        $this->assertEquals("HTTP/1.1 200 OK\r\nSet-Cookie: name=test\r\nSet-Cookie: session=abc\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testReponseWithExpectContinueRequestContainsContinueWithLaterResponse()
@@ -2429,18 +2075,6 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response();
         });
-
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
 
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
@@ -2452,8 +2086,9 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
 
         $this->connection->emit('data', array($data));
-        $this->assertContainsString("HTTP/1.1 100 Continue\r\n", $buffer);
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+
+        $this->assertContainsString("HTTP/1.1 100 Continue\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseWithExpectContinueRequestWontSendContinueForHttp10()
@@ -2461,18 +2096,6 @@ class StreamingServerTest extends TestCase
         $server = new StreamingServer(Loop::get(), function (ServerRequestInterface $request) {
             return new Response();
         });
-
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
 
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
@@ -2482,14 +2105,15 @@ class StreamingServerTest extends TestCase
         $data .= "\r\n";
 
         $this->connection->emit('data', array($data));
-        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $buffer);
-        $this->assertNotContainsString("HTTP/1.1 100 Continue\r\n\r\n", $buffer);
+
+        $this->assertContainsString("HTTP/1.0 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("HTTP/1.1 100 Continue\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testInvalidCallbackFunctionLeadsToException()
     {
         $this->setExpectedException('InvalidArgumentException');
-        $server = new StreamingServer(Loop::get(), 'invalid');
+        new StreamingServer(Loop::get(), 'invalid');
     }
 
     public function testResponseBodyStreamWillStreamDataWithChunkedTransferEncoding()
@@ -2504,17 +2128,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
 
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
@@ -2525,10 +2138,10 @@ class StreamingServerTest extends TestCase
         $input->emit('data', array('1'));
         $input->emit('data', array('23'));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("1\r\n1\r\n", $buffer);
-        $this->assertContainsString("2\r\n23\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("1\r\n1\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("2\r\n23\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseBodyStreamWithContentLengthWillStreamTillLengthWithoutTransferEncoding()
@@ -2543,18 +2156,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2564,11 +2165,11 @@ class StreamingServerTest extends TestCase
         $input->emit('data', array('hel'));
         $input->emit('data', array('lo'));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Content-Length: 5\r\n", $buffer);
-        $this->assertNotContainsString("Transfer-Encoding", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
-        $this->assertContainsString("hello", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("Content-Length: 5\r\n", $this->connection->writeBuffer);
+        $this->assertNotContainsString("Transfer-Encoding", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("hello", $this->connection->writeBuffer);
     }
 
     public function testResponseWithResponsePromise()
@@ -2577,26 +2178,14 @@ class StreamingServerTest extends TestCase
             return \React\Promise\resolve(new Response());
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
         $data = $this->createGetRequest();
 
         $this->connection->emit('data', array($data));
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("\r\n\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("\r\n\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseReturnInvalidTypeWillResultInError()
@@ -2610,18 +2199,6 @@ class StreamingServerTest extends TestCase
             $exception = $ex;
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2629,7 +2206,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
         $this->assertInstanceOf('RuntimeException', $exception);
     }
 
@@ -2639,18 +2216,6 @@ class StreamingServerTest extends TestCase
             return \React\Promise\resolve("invalid");
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2658,7 +2223,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseRejectedPromiseWillResultInErrorMessage()
@@ -2670,18 +2235,6 @@ class StreamingServerTest extends TestCase
         });
         $server->on('error', $this->expectCallableOnce());
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2689,7 +2242,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseExceptionInCallbackWillResultInErrorMessage()
@@ -2701,18 +2254,6 @@ class StreamingServerTest extends TestCase
         });
         $server->on('error', $this->expectCallableOnce());
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2720,7 +2261,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseWithContentLengthHeaderForStringBodyOverwritesTransferEncoding()
@@ -2733,18 +2274,6 @@ class StreamingServerTest extends TestCase
             );
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2752,11 +2281,10 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
-        $this->assertContainsString("Content-Length: 5\r\n", $buffer);
-        $this->assertContainsString("hello", $buffer);
-
-        $this->assertNotContainsString("Transfer-Encoding", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("Content-Length: 5\r\n", $this->connection->writeBuffer);
+        $this->assertContainsString("hello", $this->connection->writeBuffer);
+        $this->assertNotContainsString("Transfer-Encoding", $this->connection->writeBuffer);
     }
 
     public function testResponseWillBeHandled()
@@ -2765,18 +2293,6 @@ class StreamingServerTest extends TestCase
             return new Response();
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2784,7 +2300,7 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 200 OK\r\n", $this->connection->writeBuffer);
     }
 
     public function testResponseExceptionThrowInCallBackFunctionWillResultInErrorMessage()
@@ -2798,18 +2314,6 @@ class StreamingServerTest extends TestCase
             $exception = $ex;
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2817,8 +2321,9 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
+
         $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertEquals('hello', $exception->getPrevious()->getMessage());
     }
 
@@ -2836,18 +2341,6 @@ class StreamingServerTest extends TestCase
             $exception = $ex;
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2863,8 +2356,9 @@ class StreamingServerTest extends TestCase
             );
         }
 
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
+
         $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
         $this->assertEquals('hello', $exception->getPrevious()->getMessage());
     }
 
@@ -2881,18 +2375,6 @@ class StreamingServerTest extends TestCase
             $exception = $ex;
         });
 
-        $buffer = '';
-        $this->connection
-            ->expects($this->any())
-            ->method('write')
-            ->will(
-                $this->returnCallback(
-                    function ($data) use (&$buffer) {
-                        $buffer .= $data;
-                    }
-                )
-            );
-
         $server->listen($this->socket);
         $this->socket->emit('connection', array($this->connection));
 
@@ -2900,7 +2382,8 @@ class StreamingServerTest extends TestCase
 
         $this->connection->emit('data', array($data));
 
-        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $buffer);
+        $this->assertContainsString("HTTP/1.1 500 Internal Server Error\r\n", $this->connection->writeBuffer);
+
         $this->assertInstanceOf('RuntimeException', $exception);
     }
 
@@ -2911,22 +2394,22 @@ class StreamingServerTest extends TestCase
             $requestValidation = $request;
         });
 
-        $this->connection
-            ->expects($this->any())
-            ->method('getRemoteAddress')
-            ->willReturn('192.168.1.2:80');
-
-        $this->connection
-            ->expects($this->any())
-            ->method('getLocalAddress')
-            ->willReturn('127.0.0.1:8080');
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getRemoteAddress', 'getLocalAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getRemoteAddress', 'getLocalAddress'))->getMock();
+        }
+        $connection->expects($this->any())->method('getRemoteAddress')->willReturn('192.168.1.2:80');
+        $connection->expects($this->any())->method('getLocalAddress')->willReturn('127.0.0.1:8080');
 
         $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        $this->socket->emit('connection', array($connection));
 
         $data = $this->createGetRequest();
 
-        $this->connection->emit('data', array($data));
+        $connection->emit('data', array($data));
 
         $serverParams = $requestValidation->getServerParams();
 
@@ -3068,14 +2551,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->once())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->once())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserOnceAndInvokeRequestHandlerWhenParserIsDoneForHttp11ConnectionClose()
@@ -3091,14 +2582,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->once())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->once())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserOnceAndInvokeRequestHandlerWhenParserIsDoneAndRequestHandlerReturnsConnectionClose()
@@ -3116,14 +2615,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->once())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->once())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserTwiceAfterInvokingRequestHandlerWhenConnectionCanBeKeptAliveForHttp11Default()
@@ -3141,14 +2648,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->never())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->never())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserTwiceAfterInvokingRequestHandlerWhenConnectionCanBeKeptAliveForHttp10ConnectionKeepAlive()
@@ -3166,14 +2681,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->never())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->never())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserOnceAfterInvokingRequestHandlerWhenStreamingResponseBodyKeepsStreaming()
@@ -3192,14 +2715,22 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->once())->method('write');
-        $this->connection->expects($this->never())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->once())->method('write');
+        $connection->expects($this->never())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
     }
 
     public function testNewConnectionWillInvokeParserTwiceAfterInvokingRequestHandlerWhenStreamingResponseBodyEnds()
@@ -3218,18 +2749,26 @@ class StreamingServerTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($server, $parser);
 
-        $server->listen($this->socket);
-        $this->socket->emit('connection', array($this->connection));
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write', 'end'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write', 'end'))->getMock();
+        }
 
-        $this->connection->expects($this->exactly(2))->method('write');
-        $this->connection->expects($this->never())->method('end');
+        $server->listen($this->socket);
+        $this->socket->emit('connection', array($connection));
+
+        $connection->expects($this->exactly(2))->method('write');
+        $connection->expects($this->never())->method('end');
 
         // pretend parser just finished parsing
-        $server->handleRequest($this->connection, $request);
+        $server->handleRequest($connection, $request);
 
-        $this->assertCount(2, $this->connection->listeners('close'));
+        $this->assertCount(2, $connection->listeners('close'));
         $body->end();
-        $this->assertCount(1, $this->connection->listeners('close'));
+        $this->assertCount(1, $connection->listeners('close'));
     }
 
     private function createGetRequest()

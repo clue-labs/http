@@ -8,14 +8,21 @@ use React\Stream\WritableStreamInterface;
 
 class SocketConnectionStub extends EventEmitter implements ConnectionInterface
 {
+    /**
+     * @var string
+     * @readonly
+     */
+    public $writeBuffer = '';
+
     public function write($data)
     {
-        // NO-OP
+        $this->writeBuffer .= $data;
+        return true;
     }
 
     public function end($data = null)
     {
-        // NO-OP
+        $this->writeBuffer .= $data;
     }
 
     public function close()
