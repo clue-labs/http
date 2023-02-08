@@ -26,21 +26,60 @@ class ClientRequestStreamTest extends TestCase
         $requestData = new Request('GET', $uri);
         $request = new ClientRequestStream($connectionManager, $requestData);
 
-        $connection->expects($this->atLeast(5))->method('on')->withConsecutive(
-            array('drain', $this->identicalTo(array($request, 'handleDrain'))),
-            array('data', $this->identicalTo(array($request, 'handleData'))),
-            array('end', $this->identicalTo(array($request, 'handleEnd'))),
-            array('error', $this->identicalTo(array($request, 'handleError'))),
-            array('close', $this->identicalTo(array($request, 'close')))
-        );
+        $that = $this;
+        $connection->expects($this->atLeast(5))->method('on')->willReturnCallback(function ($event, $listener) use ($request, $that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame('drain', $event);
+                    $that->assertSame(array($request, 'handleDrain'), $listener);
+                    return;
+                case 1:
+                    $that->assertSame('data', $event);
+                    $that->assertSame(array($request, 'handleData'), $listener);
+                    return;
+                case 2:
+                    $that->assertSame('end', $event);
+                    $that->assertSame(array($request, 'handleEnd'), $listener);
+                    return;
+                case 3:
+                    $that->assertSame('error', $event);
+                    $that->assertSame(array($request, 'handleError'), $listener);
+                    return;
+                case 4:
+                    $that->assertSame('close', $event);
+                    $that->assertSame(array($request, 'close'), $listener);
+                    return;
+            }
+            // NO-OP to allow other event listeners not tested here
+        });
 
-        $connection->expects($this->exactly(5))->method('removeListener')->withConsecutive(
-            array('drain', $this->identicalTo(array($request, 'handleDrain'))),
-            array('data', $this->identicalTo(array($request, 'handleData'))),
-            array('end', $this->identicalTo(array($request, 'handleEnd'))),
-            array('error', $this->identicalTo(array($request, 'handleError'))),
-            array('close', $this->identicalTo(array($request, 'close')))
-        );
+        $connection->expects($this->exactly(5))->method('removeListener')->willReturnCallback(function ($event, $listener) use ($request, $that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame('drain', $event);
+                    $that->assertSame(array($request, 'handleDrain'), $listener);
+                    return;
+                case 1:
+                    $that->assertSame('data', $event);
+                    $that->assertSame(array($request, 'handleData'), $listener);
+                    return;
+                case 2:
+                    $that->assertSame('end', $event);
+                    $that->assertSame(array($request, 'handleEnd'), $listener);
+                    return;
+                case 3:
+                    $that->assertSame('error', $event);
+                    $that->assertSame(array($request, 'handleError'), $listener);
+                    return;
+                case 4:
+                    $that->assertSame('close', $event);
+                    $that->assertSame(array($request, 'close'), $listener);
+                    return;
+            }
+            $that->fail();
+        });
 
         $request->end();
 
@@ -736,11 +775,22 @@ class ClientRequestStreamTest extends TestCase
     public function writeWithAPostRequestShouldSendToTheStream()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
-        $connection->expects($this->exactly(3))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")),
-            array($this->identicalTo("post")),
-            array($this->identicalTo("data"))
-        );
+        $that = $this;
+        $connection->expects($this->exactly(3))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertMatchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#", $data);
+                    return false;
+                case 1:
+                    $that->assertSame("post", $data);
+                    return false;
+                case 2:
+                    $that->assertSame("data", $data);
+                    return false;
+            }
+            $that->fail();
+        });
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
         $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));
@@ -761,12 +811,19 @@ class ClientRequestStreamTest extends TestCase
     public function writeWithAPostRequestShouldSendBodyAfterHeadersAndEmitDrainEvent()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
-        $connection->expects($this->exactly(2))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")),
-            array($this->identicalTo("data"))
-        )->willReturn(
-            true
-        );
+        $that = $this;
+        $connection->expects($this->exactly(2))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertMatchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#", $data);
+                    return true;
+                case 1:
+                    $that->assertSame("data", $data);
+                    return true;
+            }
+            $that->fail();
+        });
 
         $deferred = new Deferred();
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
@@ -794,17 +851,27 @@ class ClientRequestStreamTest extends TestCase
     /** @test */
     public function writeWithAPostRequestShouldForwardDrainEventIfFirstChunkExceedsBuffer()
     {
-        $connection = $this->getMockBuilder('React\Socket\Connection')
-            ->disableOriginalConstructor()
-            ->setMethods(array('write'))
-            ->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('write'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('write'))->getMock();
+        }
 
-        $connection->expects($this->exactly(2))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsomepost$#")),
-            array($this->identicalTo("data"))
-        )->willReturn(
-            false
-        );
+        $that = $this;
+        $connection->expects($this->exactly(2))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame("POST / HTTP/1.0\r\nHost: www.example.com\r\n\r\nsomepost", $data);
+                    return false;
+                case 1:
+                    $that->assertSame("data", $data);
+                    return false;
+            }
+            $that->fail();
+        });
 
         $deferred = new Deferred();
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
@@ -834,11 +901,22 @@ class ClientRequestStreamTest extends TestCase
     public function pipeShouldPipeDataIntoTheRequestBody()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
-        $connection->expects($this->exactly(3))->method('write')->withConsecutive(
-            array($this->matchesRegularExpression("#^POST / HTTP/1\.0\r\nHost: www.example.com\r\n\r\nsome$#")),
-            array($this->identicalTo("post")),
-            array($this->identicalTo("data"))
-        );
+        $that = $this;
+        $connection->expects($this->exactly(3))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame("POST / HTTP/1.0\r\nHost: www.example.com\r\n\r\nsome", $data);
+                    return false;
+                case 1:
+                    $that->assertSame("post", $data);
+                    return false;
+                case 2:
+                    $that->assertSame("data", $data);
+                    return false;
+            }
+            $that->fail();
+        });
 
         $connectionManager = $this->getMockBuilder('React\Http\Io\ClientConnectionManager')->disableOriginalConstructor()->getMock();
         $connectionManager->expects($this->once())->method('connect')->willReturn(\React\Promise\resolve($connection));

@@ -7,7 +7,7 @@ use React\Tests\Http\TestCase;
 
 class IniUtilTest extends TestCase
 {
-    public function provideIniSizes()
+    public static function provideIniSizes()
     {
         return array(
             array(
@@ -58,7 +58,7 @@ class IniUtilTest extends TestCase
         $this->assertEquals('2', IniUtil::iniSizeToBytes('2x'));
     }
 
-    public function provideInvalidInputIniSizeToBytes()
+    public static function provideInvalidInputIniSizeToBytes()
     {
         return array(
             array('-1G'),

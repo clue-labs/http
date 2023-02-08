@@ -4,6 +4,7 @@ namespace React\Tests\Http\Io;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Io\RequestHeaderParser;
+use React\Tests\Http\SocketConnectionStub;
 use React\Tests\Http\TestCase;
 
 class RequestHeaderParserTest extends TestCase
@@ -15,7 +16,7 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
         $parser->on('headers', $this->expectCallableNever());
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
 
         $parser->handle($connection);
 
@@ -36,7 +37,8 @@ class RequestHeaderParserTest extends TestCase
         $parser = new RequestHeaderParser($clock);
         $parser->on('headers', $this->expectCallableOnce());
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
+
         $parser->handle($connection);
 
         $data = $this->createGetRequest();
@@ -54,8 +56,8 @@ class RequestHeaderParserTest extends TestCase
             ++$called;
         });
 
-        $connection1 = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
-        $connection2 = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection1 = new SocketConnectionStub();
+        $connection2 = new SocketConnectionStub();
         $parser->handle($connection1);
         $parser->handle($connection2);
 
@@ -79,7 +81,7 @@ class RequestHeaderParserTest extends TestCase
             $conn = $connection;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = $this->createGetRequest();
@@ -111,7 +113,7 @@ class RequestHeaderParserTest extends TestCase
             });
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = "GET / HTTP/1.0\r\n\r\n";
@@ -140,7 +142,7 @@ class RequestHeaderParserTest extends TestCase
             });
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = "POST / HTTP/1.0\r\nContent-Length: 11\r\n\r\n";
@@ -167,7 +169,7 @@ class RequestHeaderParserTest extends TestCase
             });
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $size = 10000;
@@ -195,7 +197,7 @@ class RequestHeaderParserTest extends TestCase
             });
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = "POST / HTTP/1.0\r\n\r\n";
@@ -222,7 +224,7 @@ class RequestHeaderParserTest extends TestCase
             });
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = "POST / HTTP/1.0\r\nContent-Length: 6\r\n\r\n";
@@ -243,7 +245,7 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = $this->createAdvancedPostRequest();
@@ -272,7 +274,13 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $parser->handle($connection);
 
@@ -293,7 +301,13 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tls://127.1.1.1:8000');
         $parser->handle($connection);
 
@@ -317,7 +331,7 @@ class RequestHeaderParserTest extends TestCase
             $passedConnection = $connection;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $data = str_repeat('A', 8193);
@@ -340,7 +354,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("\r\n\r\n"));
@@ -361,7 +375,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET /\r\n\r\n"));
@@ -382,7 +396,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost : yes\r\n\r\n"));
@@ -403,7 +417,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: yes\rFoo: bar\r\n\r\n"));
@@ -424,7 +438,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET tcp://example.com:80/ HTTP/1.0\r\n\r\n"));
@@ -445,7 +459,7 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET /somepath?param=http://example.com HTTP/1.1\r\nHost: localhost\r\n\r\n"));
@@ -472,7 +486,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET ://example.com:80/ HTTP/1.0\r\n\r\n"));
@@ -493,7 +507,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET http://example.com:80/#home HTTP/1.0\r\n\r\n"));
@@ -514,7 +528,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: http://user:pass@host/\r\n\r\n"));
@@ -535,7 +549,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET http://example.com/ HTTP/1.1\r\nHost: \r\n\r\n"));
@@ -556,7 +570,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("CONNECT http://example.com:8080/ HTTP/1.1\r\nHost: example.com:8080\r\n\r\n"));
@@ -577,7 +591,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.2\r\n\r\n"));
@@ -599,7 +613,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: foo\r\n\r\n"));
@@ -621,7 +635,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\nContent-Length: 5\r\n\r\n"));
@@ -643,7 +657,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: foo\r\n\r\n"));
@@ -665,7 +679,7 @@ class RequestHeaderParserTest extends TestCase
             $error = $message;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Length: 0\r\n\r\n"));
@@ -688,7 +702,13 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tls://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tls://192.168.1.1:8001');
         $parser->handle($connection);
@@ -721,7 +741,13 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tcp://192.168.1.1:8001');
         $parser->handle($connection);
@@ -754,7 +780,13 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('unix://./server.sock');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn(null);
         $parser->handle($connection);
@@ -791,7 +823,7 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
@@ -815,7 +847,13 @@ class RequestHeaderParserTest extends TestCase
 
         $parser = new RequestHeaderParser($clock);
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        if (method_exists('PHPUnit\Framework\MockObject\MockBuilder', 'onlyMethods')) {
+            // PHPUnit 9+
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->onlyMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 8
+            $connection = $this->getMockBuilder('React\Tests\Http\SocketConnectionStub')->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        }
         $connection->expects($this->once())->method('getLocalAddress')->willReturn('tcp://127.1.1.1:8000');
         $connection->expects($this->once())->method('getRemoteAddress')->willReturn('tcp://192.168.1.1:8001');
 
@@ -850,7 +888,7 @@ class RequestHeaderParserTest extends TestCase
 
         $parser = new RequestHeaderParser($clock);
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(array('getLocalAddress', 'getRemoteAddress'))->getMock();
+        $connection = new SocketConnectionStub();
 
         $parser->handle($connection);
         $connection->emit('data', array("GET /foo HTTP/1.0\r\nHost: example.com\r\n\r\n"));
@@ -876,7 +914,7 @@ class RequestHeaderParserTest extends TestCase
             $request = $parsedRequest;
         });
 
-        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->setMethods(null)->getMock();
+        $connection = new SocketConnectionStub();
         $parser->handle($connection);
 
         $connection->emit('data', array("GET /foo.php?hello=world&test=this HTTP/1.0\r\nHost: example.com\r\n\r\n"));

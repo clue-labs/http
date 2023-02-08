@@ -93,7 +93,7 @@ final class MiddlewareRunnerTest extends TestCase
         $middleware($request);
     }
 
-    public function provideProcessStackMiddlewares()
+    public static function provideProcessStackMiddlewares()
     {
         $processStackA = new ProcessStack();
         $processStackB = new ProcessStack();
@@ -173,7 +173,7 @@ final class MiddlewareRunnerTest extends TestCase
         }
     }
 
-    public function provideErrorHandler()
+    public static function provideErrorHandler()
     {
         return array(
             array(
@@ -277,7 +277,7 @@ final class MiddlewareRunnerTest extends TestCase
         );
     }
 
-    public function provideUncommonMiddlewareArrayFormats()
+    public static function provideUncommonMiddlewareArrayFormats()
     {
         return array(
             array(

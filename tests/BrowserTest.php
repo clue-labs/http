@@ -335,7 +335,7 @@ class BrowserTest extends TestCase
         $this->assertNotSame($this->browser, $browser);
     }
 
-    public function provideOtherUris()
+    public static function provideOtherUris()
     {
         return array(
             'empty returns base' => array(

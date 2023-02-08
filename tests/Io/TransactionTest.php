@@ -584,12 +584,19 @@ class TransactionTest extends TestCase
         $requestOriginal = new Request('GET', 'http://example.com');
         $response = new Response(333, array('Location' => 'foo'));
         $sender = $this->makeSenderMock();
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($requestOriginal),
-            array($this->callback(function (RequestInterface $request) {
-                return $request->getMethod() === 'GET' && (string)$request->getUri() === 'http://example.com/foo';
-            }))
-        )->willReturnOnConsecutiveCalls(
+        $n = 0;
+        $that = $this;
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use ($requestOriginal, &$n, $that) {
+            ++$n;
+            if ($n === 1) {
+                $that->assertSame($requestOriginal, $request);
+            }
+            if ($n === 2) {
+                $that->assertSame('GET', $request->getMethod());
+                $that->assertEquals('http://example.com/foo', (string) $request->getUri());
+            }
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($response),
             new \React\Promise\Promise(function () { })
         );
@@ -614,13 +621,10 @@ class TransactionTest extends TestCase
         // response to the given $requestWithUserAgent
         $okResponse = new Response(200);
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
-                $that->assertEquals(array('Chrome'), $request->getHeader('User-Agent'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals(array('Chrome'), $request->getHeader('User-Agent'));
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -644,14 +648,15 @@ class TransactionTest extends TestCase
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $requestWithAuthorization
         $okResponse = new Response(200);
+        $n = 0;
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use (&$n, $that) {
+            ++$n;
+            if ($n === 2) {
                 $that->assertFalse($request->hasHeader('Authorization'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+            }
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -676,13 +681,10 @@ class TransactionTest extends TestCase
         // response to the given $requestWithAuthorization
         $okResponse = new Response(200);
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
-                $that->assertEquals(array('secret'), $request->getHeader('Authorization'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use ($that) {
+            $that->assertEquals(array('secret'), $request->getHeader('Authorization'));
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -705,15 +707,16 @@ class TransactionTest extends TestCase
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $requestWithAuthorization
         $okResponse = new Response(200);
+        $n = 0;
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use (&$n, $that) {
+            ++$n;
+            if ($n === 2) {
                 $that->assertEquals('user:pass', $request->getUri()->getUserInfo());
                 $that->assertFalse($request->hasHeader('Authorization'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+            }
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -741,15 +744,16 @@ class TransactionTest extends TestCase
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $requestWithCustomHeaders
         $okResponse = new Response(200);
+        $n = 0;
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use (&$n, $that) {
+            ++$n;
+            if ($n === 2) {
                 $that->assertFalse($request->hasHeader('Content-Type'));
                 $that->assertFalse($request->hasHeader('Content-Length'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+            }
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -777,16 +781,17 @@ class TransactionTest extends TestCase
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $request
         $okResponse = new Response(200);
+        $n = 0;
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
+        $sender->expects($this->exactly(2))->method('send')->with($this->callback(function (RequestInterface $request) use (&$n, $that) {
+            ++$n;
+            if ($n === 2) {
                 $that->assertEquals('GET', $request->getMethod());
                 $that->assertFalse($request->hasHeader('Content-Type'));
                 $that->assertFalse($request->hasHeader('Content-Length'));
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
+            }
+            return true;
+        }))->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             Promise\resolve($okResponse)
         );
@@ -814,26 +819,27 @@ class TransactionTest extends TestCase
         // mock sender to resolve promise with the given $okResponse in
         // response to the given $request
         $okResponse = new Response(200);
+        $n = 0;
         $that = $this;
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->callback(function (RequestInterface $request) use ($that) {
-                $that->assertEquals('POST', $request->getMethod());
-                $that->assertEquals('{"key":"value"}', (string)$request->getBody());
-                $that->assertEquals(
-                    array(
-                        'Content-Type' => array('text/html; charset=utf-8'),
-                        'Content-Length' => array('111'),
-                        'Host' => array('example.com')
-                    ),
-                    $request->getHeaders()
-                );
-                return true;
-            }))
-        )->willReturnOnConsecutiveCalls(
-            Promise\resolve($redirectResponse),
-            Promise\resolve($okResponse)
-        );
+        $sender->expects($this->exactly(2))->method('send')->willReturnCallback(function (RequestInterface $request) use (&$n, $redirectResponse, $okResponse, $that) {
+            switch ($n++) {
+                case 0:
+                    return \React\Promise\resolve($redirectResponse);
+                case 1:
+                    $that->assertEquals('POST', $request->getMethod());
+                    $that->assertEquals('{"key":"value"}', (string)$request->getBody());
+                    $that->assertEquals(
+                        array(
+                            'Content-Type' => array('text/html; charset=utf-8'),
+                            'Content-Length' => array('111'),
+                            'Host' => array('example.com')
+                        ),
+                        $request->getHeaders()
+                    );
+                    return \React\Promise\resolve($okResponse);
+            }
+            $that->fail();
+        });
 
         $transaction = new Transaction($sender, $loop);
         $transaction->send($request);
@@ -856,9 +862,7 @@ class TransactionTest extends TestCase
         // response to the given $request
         $redirectResponse = new Response(307, array('Location' => 'http://example.com/new'));
 
-        $sender->expects($this->once())->method('send')->withConsecutive(
-            array($this->anything())
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->once())->method('send')->willReturn(
             Promise\resolve($redirectResponse)
         );
 
@@ -927,10 +931,7 @@ class TransactionTest extends TestCase
         $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
 
         // mock sender to return pending promise which should be cancelled when cancelling result
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->anything())
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             $pending
         );
@@ -954,10 +955,7 @@ class TransactionTest extends TestCase
         $second = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
 
         // mock sender to return pending promise which should be cancelled when cancelling result
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->anything())
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->willReturnOnConsecutiveCalls(
             $first->promise(),
             $second
         );
@@ -1028,10 +1026,7 @@ class TransactionTest extends TestCase
         $pending = new \React\Promise\Promise(function () { }, $this->expectCallableOnce());
 
         // mock sender to return pending promise which should be cancelled when cancelling result
-        $sender->expects($this->exactly(2))->method('send')->withConsecutive(
-            array($this->anything()),
-            array($this->anything())
-        )->willReturnOnConsecutiveCalls(
+        $sender->expects($this->exactly(2))->method('send')->willReturnOnConsecutiveCalls(
             Promise\resolve($redirectResponse),
             $pending
         );

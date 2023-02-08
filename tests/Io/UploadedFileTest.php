@@ -8,7 +8,7 @@ Use React\Tests\Http\TestCase;
 
 class UploadedFileTest extends TestCase
 {
-    public function failtyErrorProvider()
+    public static function failtyErrorProvider()
     {
         return array(
             array('a'),

@@ -117,7 +117,19 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("5\r\nhello\r\n"))->willReturn(false);
+        $that = $this;
+        $outgoing->expects($this->exactly(2))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertEquals("", $data);
+                    return false;
+                case 1:
+                    $that->assertEquals("5\r\nhello\r\n", $data);
+                    return false;
+            }
+            $that->fail();
+        });
 
         $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
         $client->expects($this->once())->method('request')->willReturn($outgoing);
@@ -136,7 +148,19 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("0\r\n\r\n"))->willReturn(false);
+        $that = $this;
+        $outgoing->expects($this->exactly(2))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertEquals("", $data);
+                    return false;
+                case 1:
+                    $that->assertEquals("0\r\n\r\n", $data);
+                    return false;
+            }
+            $that->fail();
+        });
         $outgoing->expects($this->once())->method('end')->with(null);
 
         $client = $this->getMockBuilder('React\Http\Client\Client')->disableOriginalConstructor()->getMock();
@@ -213,7 +237,19 @@ class SenderTest extends TestCase
     {
         $outgoing = $this->getMockBuilder('React\Http\Io\ClientRequestStream')->disableOriginalConstructor()->getMock();
         $outgoing->expects($this->once())->method('isWritable')->willReturn(true);
-        $outgoing->expects($this->exactly(2))->method('write')->withConsecutive(array(""), array("0\r\n\r\n"))->willReturn(false);
+        $that = $this;
+        $outgoing->expects($this->exactly(2))->method('write')->willReturnCallback(function ($data) use ($that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertEquals("", $data);
+                    return false;
+                case 1:
+                    $that->assertEquals("0\r\n\r\n", $data);
+                    return false;
+            }
+            $that->fail();
+        });
         $outgoing->expects($this->once())->method('end');
         $outgoing->expects($this->never())->method('close');
 

@@ -98,54 +98,46 @@ class ClientConnectionManagerTest extends TestCase
     {
         $connectionToReuse = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
+        $that = $this;
         $streamHandler = null;
-        $connectionToReuse->expects($this->exactly(3))->method('on')->withConsecutive(
-            array(
-                'close',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    $streamHandler = $cb;
-                    return true;
-                })
-            ),
-            array(
-                'data',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            ),
-            array(
-                'error',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            )
-        );
+        $connectionToReuse->expects($this->exactly(3))->method('on')->willReturnCallback(function ($event, $listener) use (&$streamHandler, $that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame('close', $event);
+                    $that->assertNull($streamHandler);
+                    $streamHandler = $listener;
+                    return;
+                case 1:
+                    $that->assertSame('data', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+                case 2:
+                    $that->assertSame('error', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+            }
+            $that->fail();
+        });
 
-        $connectionToReuse->expects($this->exactly(3))->method('removeListener')->withConsecutive(
-            array(
-                'close',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            ),
-            array(
-                'data',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            ),
-            array(
-                'error',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            )
-        );
+        $connectionToReuse->expects($this->exactly(3))->method('removeListener')->willReturnCallback(function ($event, $listener) use (&$streamHandler, $that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame('close', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+                case 1:
+                    $that->assertSame('data', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+                case 2:
+                    $that->assertSame('error', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+            }
+            $that->fail();
+        });
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->never())->method('connect');
@@ -332,30 +324,27 @@ class ClientConnectionManagerTest extends TestCase
         $firstConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $firstConnection->expects($this->once())->method('close');
 
+        $that = $this;
         $streamHandler = null;
-        $firstConnection->expects($this->exactly(3))->method('on')->withConsecutive(
-            array(
-                'close',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    $streamHandler = $cb;
-                    return true;
-                })
-            ),
-            array(
-                'data',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            ),
-            array(
-                'error',
-                $this->callback(function ($cb) use (&$streamHandler) {
-                    assert($streamHandler instanceof \Closure);
-                    return $cb === $streamHandler;
-                })
-            )
-        );
+        $firstConnection->expects($this->exactly(3))->method('on')->willReturnCallback(function ($event, $listener) use (&$streamHandler, $that) {
+            static $n = 0;
+            switch ($n++) {
+                case 0:
+                    $that->assertSame('close', $event);
+                    $that->assertNull($streamHandler);
+                    $streamHandler = $listener;
+                    return;
+                case 1:
+                    $that->assertSame('data', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+                case 2:
+                    $that->assertSame('error', $event);
+                    $that->assertSame($streamHandler, $listener);
+                    return;
+            }
+            $that->fail();
+        });
 
         $secondConnection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $secondConnection->expects($this->never())->method('close');

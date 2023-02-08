@@ -13,7 +13,10 @@ use React\Stream\ReadableStreamInterface;
 
 final class HttpServerTest extends TestCase
 {
+    /** @var SocketConnectionStub */
     private $connection;
+
+    /** @var SocketServerStub */
     private $socket;
 
     /** @var ?int */
@@ -24,27 +27,7 @@ final class HttpServerTest extends TestCase
      */
     public function setUpConnectionMockAndSocket()
     {
-        $this->connection = $this->getMockBuilder('React\Socket\Connection')
-            ->disableOriginalConstructor()
-            ->setMethods(
-                array(
-                    'write',
-                    'end',
-                    'close',
-                    'pause',
-                    'resume',
-                    'isReadable',
-                    'isWritable',
-                    'getRemoteAddress',
-                    'getLocalAddress',
-                    'pipe'
-                )
-            )
-            ->getMock();
-
-        $this->connection->method('isWritable')->willReturn(true);
-        $this->connection->method('isReadable')->willReturn(true);
-
+        $this->connection = new SocketConnectionStub();
         $this->socket = new SocketServerStub();
     }
 
@@ -300,7 +283,7 @@ final class HttpServerTest extends TestCase
         return $data;
     }
 
-    public function provideIniSettingsForConcurrency()
+    public static function provideIniSettingsForConcurrency()
     {
         return array(
             'default settings' => array(
